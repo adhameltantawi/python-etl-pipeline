@@ -1,10 +1,12 @@
-import glob 
-import pandas as pd 
-import xml.etree.ElementTree as ET 
-from datetime import datetime 
-  
-log_file = "log_file.txt" 
-target_file = "transformed_data.csv" 
+import os
+import glob
+import pandas as pd
+import xml.etree.ElementTree as ET
+from datetime import datetime
+
+data_dir = "data"
+log_file = "log_file.txt"
+target_file = "transformed_data.csv"
   
 def extract_from_csv(file_to_process): 
     dataframe = pd.read_csv(file_to_process) 
@@ -25,23 +27,36 @@ def extract_from_xml(file_to_process):
         dataframe = pd.concat([dataframe, pd.DataFrame([{"name":name,"height":height, "weight":weight}])], ignore_index=True) 
     return dataframe 
   
-def extract(): 
-    extracted_data = pd.DataFrame(columns=['name','height','weight'])  # create an empty data frame to hold extracted data
-     
-    # process all csv files, except the target file
-    for csvfile in glob.glob("*.csv"): 
-        if csvfile != target_file:  # check if the file is not the target file
-            extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_csv(csvfile))], ignore_index=True) 
-         
-    # process all json files 
-    for jsonfile in glob.glob("*.json"): 
-        extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_json(jsonfile))], ignore_index=True) 
-     
-    # process all xml files 
-    for xmlfile in glob.glob("*.xml"): 
-        extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_xml(xmlfile))], ignore_index=True) 
-         
-    return extracted_data 
+
+def extract():
+    extracted_data = pd.DataFrame(
+        columns=["name", "height", "weight"]
+    )
+
+    # Extract CSV files from the data folder
+    for csvfile in glob.glob(os.path.join(data_dir, "*.csv")):
+        if os.path.abspath(csvfile) != os.path.abspath(target_file):
+            extracted_data = pd.concat(
+                [extracted_data, extract_from_csv(csvfile)],
+                ignore_index=True
+            )
+
+    # Extract JSON files from the data folder
+    for jsonfile in glob.glob(os.path.join(data_dir, "*.json")):
+        extracted_data = pd.concat(
+            [extracted_data, extract_from_json(jsonfile)],
+            ignore_index=True
+        )
+
+    # Extract XML files from the data folder
+    for xmlfile in glob.glob(os.path.join(data_dir, "*.xml")):
+        extracted_data = pd.concat(
+            [extracted_data, extract_from_xml(xmlfile)],
+            ignore_index=True
+        )
+
+    return extracted_data
+
   
 def transform(data): 
     # Convert inches to meters and round off to two decimals 
